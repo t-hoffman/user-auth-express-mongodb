@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken"),
   bcrypt = require("bcrypt"),
   db = require("../models"),
-  User = db.User,
-  { SECRET_KEY } = process.env;
+  User = db.User;
 
 exports.signup = (req, res) => {
   const newUser = new User({
@@ -15,7 +14,7 @@ exports.signup = (req, res) => {
     .save()
     .then((user) => {
       user.password = undefined;
-      res.status(200).send(user);
+      res.status(200).send({ message: "Successfully created new user.", user });
     })
     .catch((err) => res.status(500).send({ message: err }));
 };
@@ -23,16 +22,11 @@ exports.signup = (req, res) => {
 exports.signin = (req, res) => {
   User.findOne({ username: req.body.username })
     .then((user) => {
-      if (!user) return res.status(404).send({ message: "User not found." });
+      if (!user)
+        return res.status(401).send({ message: "Invalid login credentials." });
 
-      const passwordValid = bcrypt.compareSync(
-        req.body.password,
-        user.password
-      );
-
-      if (!passwordValid) {
+      if (!bcrypt.compareSync(req.body.password, user.password)) {
         return res.status(401).send({
-          accessToken: null,
           message: "Invalid login credentials.",
         });
       }

@@ -1,5 +1,5 @@
 exports.allAccess = (req, res) => {
-  res.status(200).send("Public Content.");
+  res.status(200).send({ message: "Public Content", headers: req.headers });
 };
 
 exports.userBoard = (req, res) => {

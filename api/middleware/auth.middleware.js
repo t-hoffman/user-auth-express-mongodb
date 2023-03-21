@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken"),
   db = require("../models"),
-  User = db.User,
-  { SECRET_KEY } = process.env;
+  User = db.User;
 
 exports.checkDuplicate = (req, res, next) => {
   User.findOne({ username: req.body.username })
@@ -28,9 +27,11 @@ exports.checkDuplicate = (req, res, next) => {
 };
 
 exports.verifyToken = (req, res, next) => {
-  let token = req.headers["x-access-token"];
+  let token = req.headers[TOKEN_HEADER.toLowerCase()];
 
-  if (!token) return res.status(403).send({ message: "No token provided." });
+  if (TOKEN_SPLIT) token = token.split(TOKEN_SPLIT)[1];
+
+  if (!token) return res.status(403).send({ message: "Unauthorized user." });
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(401).send({ message: err });
@@ -38,11 +39,4 @@ exports.verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   });
-};
-
-exports.isTyler2 = (req, res, next) => {
-  if (req.user.username !== "tyler2")
-    return res.status(401).send({ message: "Unauthorized user." });
-
-  next();
 };

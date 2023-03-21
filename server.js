@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
   res.send({ message: "Welcome to my app!" });
 });
 
-// routes
+// Routes
 require("./api/routes")(app);
 
 app.listen(PORT);
