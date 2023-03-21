@@ -11,7 +11,7 @@ module.exports = (app) => {
   });
 
   app.get("/api/test/all", controller.allAccess);
-  app.get(
+  app.post(
     "/api/test/user",
     [auth.verifyToken, auth.isTyler2],
     controller.userBoard
