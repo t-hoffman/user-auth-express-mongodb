@@ -1,13 +1,16 @@
 // DB connection & config variables
 require("./api/config/config");
 
-const express = require("express"),
-  cors = require("cors"),
-  app = express();
+const express = require("express");
+const cors = require("cors");
+const app = express();
+const cookieParser = require("cookie-parser");
 
-// CORS and parser
-app.use(cors({ origin: "*" }));
+// CORS & parsers
+// app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(cookieParser(SECRET_KEY));
 
 // Home route
 app.get("/", (req, res) => {

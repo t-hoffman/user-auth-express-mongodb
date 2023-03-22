@@ -1,6 +1,6 @@
-const mongoose = require("mongoose"),
-  config = require("../config/config"),
-  crypto = require("crypto");
+const mongoose = require("mongoose");
+const config = require("../config/config");
+const crypto = require("crypto");
 
 const RefreshTokenSchema = new mongoose.Schema({
   token: String,
@@ -12,18 +12,18 @@ const RefreshTokenSchema = new mongoose.Schema({
 });
 
 RefreshTokenSchema.statics.createToken = async function (user) {
-  let expiredAt = new Date(),
-    _token = crypto.randomUUID();
+  const expiredAt = new Date();
+  const _token = crypto.randomUUID();
 
   expiredAt.setSeconds(expiredAt.getSeconds() + config.jwtRefreshExpiration);
 
-  let _object = new this({
+  const _object = new this({
     token: _token,
     user: user,
     expiryDate: expiredAt.getTime(),
   });
 
-  let refreshToken = await _object.save();
+  const refreshToken = await _object.save();
 
   return refreshToken.token;
 };

@@ -1,8 +1,8 @@
-const jwt = require("jsonwebtoken"),
-  bcrypt = require("bcrypt"),
-  config = require("../config/config"),
-  db = require("../models"),
-  { User: User, refreshToken: RefreshToken } = db;
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const config = require("../config/config");
+const db = require("../models");
+const { User: User, refreshToken: RefreshToken } = db;
 
 exports.signup = (req, res) => {
   const newUser = new User({
@@ -33,62 +33,75 @@ exports.signin = (req, res) => {
       }
 
       const userInfo = {
-          _id: user._id,
-          username: user.username,
-          email: user.email,
-        },
-        token = jwt.sign(userInfo, SECRET_KEY, {
-          expiresIn: config.jwtExpiration,
-        }),
-        refreshToken = await RefreshToken.createToken(user);
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      };
+      const token = jwt.sign(userInfo, SECRET_KEY, {
+        expiresIn: config.jwtExpiration,
+      });
+      const refreshToken = await RefreshToken.createToken(user);
 
+      // Create cookie holding a refreshToken
       res
         .status(200)
-        .send({ ...userInfo, accessToken: token, refreshToken: refreshToken });
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          maxAge: 60 * 60 * 24,
+        })
+        .send({ ...userInfo, accessToken: token });
     })
     .catch((err) => {
-      // console.log(err);
+      console.error(err);
       res.status(500).send({ message: err });
     });
 };
 
 exports.refreshToken = async (req, res) => {
-  const { refreshToken: requestToken } = req.body;
+  const { refreshToken: requestToken } = req.cookies;
 
-  if (requestToken === null)
-    return res.status(403).send({ message: "Refresh token is required." });
+  if (!requestToken)
+    return res
+      .status(403)
+      .send({ message: "Refresh token not found or expired." });
 
   try {
-    let refreshToken = await RefreshToken.findOne({ token: requestToken });
+    const refreshToken = await RefreshToken.findOne({ token: requestToken });
 
     if (!refreshToken)
-      return res.status(403).send({ message: "Refresh token not found." });
+      return res
+        .status(403)
+        .send({ message: "Refresh token not found or expired." });
 
     if (RefreshToken.verifyExpiration(refreshToken)) {
       await RefreshToken.findByIdAndDelete({ _id: refreshToken._id });
 
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+
       return res.status(403).send({
-        message:
-          "Refresh token was expired.  Please make a new signin request.",
+        message: "Refresh token expired.  Please make a new signin request.",
       });
     }
 
-    const user = await User.findById({ _id: refreshToken.user }),
-      userInfo = {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-      };
-    let newAccessToken = jwt.sign(userInfo, SECRET_KEY, {
+    const user = await User.findById({ _id: refreshToken.user });
+    const userInfo = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+    };
+    const newAccessToken = jwt.sign(userInfo, SECRET_KEY, {
       expiresIn: config.jwtExpiration,
     });
 
-    return res.status(200).send({
-      accessToken: newAccessToken,
-      refreshToken: refreshToken.token,
-    });
+    return res.status(200).send({ accessToken: newAccessToken });
   } catch (err) {
-    console.log(err);
-    return res.status(500).send({ message: err });
+    console.error(err);
+    res.status(500).send({ message: err });
   }
 };

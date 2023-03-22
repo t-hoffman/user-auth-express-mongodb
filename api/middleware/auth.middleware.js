@@ -1,7 +1,7 @@
-const jwt = require("jsonwebtoken"),
-  db = require("../models"),
-  User = db.User,
-  { TokenExpiredError } = jwt;
+const jwt = require("jsonwebtoken");
+const db = require("../models");
+const User = db.User;
+const { TokenExpiredError } = jwt;
 
 exports.checkDuplicate = (req, res, next) => {
   User.findOne({ username: req.body.username })
@@ -28,9 +28,13 @@ exports.checkDuplicate = (req, res, next) => {
 };
 
 exports.verifyToken = (req, res, next) => {
-  let token = req.headers[TOKEN_HEADER.toLowerCase()];
+  // Grab the authorization header if there is one
+  let tokenHeader = TOKEN_HEADER ? TOKEN_HEADER.toLowerCase() : "authorization";
+  if (!req.headers[tokenHeader])
+    return res.status(403).send({ message: "Unauthorized user." });
 
-  if (TOKEN_SPLIT) token = token.split(TOKEN_SPLIT)[1];
+  token = req.headers[tokenHeader].split(" ");
+  token = token.length === 1 ? token[0] : token[1];
 
   if (!token) return res.status(403).send({ message: "Unauthorized user." });
 
