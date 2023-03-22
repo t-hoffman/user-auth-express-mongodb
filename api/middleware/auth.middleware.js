@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken"),
   db = require("../models"),
-  User = db.User;
+  User = db.User,
+  { TokenExpiredError } = jwt;
 
 exports.checkDuplicate = (req, res, next) => {
   User.findOne({ username: req.body.username })
@@ -34,9 +35,18 @@ exports.verifyToken = (req, res, next) => {
   if (!token) return res.status(403).send({ message: "Unauthorized user." });
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).send({ message: err });
+    if (err) return this.catchError(err, res);
 
     req.user = decoded;
     next();
   });
+};
+
+exports.catchError = (err, res) => {
+  if (err instanceof TokenExpiredError)
+    return res
+      .status(401)
+      .send({ message: "Unauthorized user.  Access token expired." });
+
+  return res.status(401).send({ message: "Unauthorized user." });
 };

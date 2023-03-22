@@ -1,5 +1,5 @@
-// DB connection & env config variables
-require("./api/config/config.js");
+// DB connection & config variables
+require("./api/config/config");
 
 const express = require("express"),
   cors = require("cors"),
