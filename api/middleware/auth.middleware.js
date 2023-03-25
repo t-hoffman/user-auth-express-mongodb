@@ -42,6 +42,7 @@ exports.verifyToken = (req, res, next) => {
     if (err) return this.catchError(err, res);
 
     req.user = decoded;
+    req.accessToken = token;
     next();
   });
 };

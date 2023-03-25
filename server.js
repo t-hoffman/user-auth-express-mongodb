@@ -7,7 +7,6 @@ const app = express();
 const cookieParser = require("cookie-parser");
 
 // CORS & parsers
-// app.use(cors({ origin: true, credentials: true }));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser(SECRET_KEY));
@@ -21,3 +20,6 @@ app.get("/", (req, res) => {
 require("./api/routes")(app);
 
 app.listen(PORT);
+
+// CLEANUP FUNCTIONS
+require("./db");

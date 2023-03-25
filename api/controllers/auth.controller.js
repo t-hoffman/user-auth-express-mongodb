@@ -47,7 +47,7 @@ exports.signin = (req, res) => {
         .status(200)
         .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: true,
+          secure: !req.headers["user-agent"].includes("Postman"),
           sameSite: "None",
           maxAge: 60 * 60 * 24,
         })
@@ -57,6 +57,26 @@ exports.signin = (req, res) => {
       console.error(err);
       res.status(500).send({ message: err });
     });
+};
+
+exports.signout = async (req, res) => {
+  const { refreshToken: requestToken } = req.cookies;
+
+  const removedToken = await RefreshToken.findOne({ token: requestToken }).then(
+    async (token) => {
+      if (token) {
+        return await RefreshToken.findByIdAndDelete({ _id: token._id });
+      }
+    }
+  );
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: !req.headers["user-agent"].includes("Postman"),
+    sameSite: "None",
+  });
+
+  res.status(200).send({ message: "User signed out." });
 };
 
 exports.refreshToken = async (req, res) => {
@@ -80,7 +100,7 @@ exports.refreshToken = async (req, res) => {
 
       res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: true,
+        secure: !req.headers["user-agent"].includes("Postman"),
         sameSite: "None",
       });
 
@@ -99,9 +119,13 @@ exports.refreshToken = async (req, res) => {
       expiresIn: config.jwtExpiration,
     });
 
-    return res.status(200).send({ accessToken: newAccessToken });
+    return res.status(200).send({ ...userInfo, accessToken: newAccessToken });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: err });
   }
+};
+
+exports.accessToken = (req, res) => {
+  res.status(200).send({ ...req.user, accessToken: req.accessToken });
 };
