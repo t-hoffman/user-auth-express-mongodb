@@ -49,9 +49,9 @@ exports.signin = (req, res) => {
           httpOnly: true,
           secure: !req.headers["user-agent"].includes("Postman"),
           sameSite: "None",
-          maxAge: 60 * 60 * 24,
+          maxAge: config.cookieExpiration,
         })
-        .send({ ...userInfo, accessToken: token });
+        .send({ accessToken: token });
     })
     .catch((err) => {
       console.error(err);
@@ -81,7 +81,7 @@ exports.signout = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   const { refreshToken: requestToken } = req.cookies;
-
+  console.log(requestToken);
   if (!requestToken)
     return res
       .status(403)
@@ -119,7 +119,7 @@ exports.refreshToken = async (req, res) => {
       expiresIn: config.jwtExpiration,
     });
 
-    return res.status(200).send({ ...userInfo, accessToken: newAccessToken });
+    return res.status(200).send({ accessToken: newAccessToken });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: err });
@@ -127,5 +127,5 @@ exports.refreshToken = async (req, res) => {
 };
 
 exports.accessToken = (req, res) => {
-  res.status(200).send({ ...req.user, accessToken: req.accessToken });
+  res.status(200).send({ accessToken: req.accessToken });
 };

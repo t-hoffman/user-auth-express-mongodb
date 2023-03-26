@@ -5,8 +5,9 @@ module.exports = { PORT, MONGODB_URI, SECRET_KEY, TOKEN_HEADER, TOKEN_SPLIT } =
 
 // Config variables
 module.exports = {
-  jwtExpiration: 60,
-  jwtRefreshExpiration: 60 * 60,
+  jwtExpiration: 60, // 1 min
+  jwtRefreshExpiration: 60 * 60, // 1 hr
+  cookieExpiration: 1000 * 60 * 60, // 1 hr
 };
 
 // MONGODB connection
